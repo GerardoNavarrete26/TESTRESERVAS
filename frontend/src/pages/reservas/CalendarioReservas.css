@@ -1,0 +1,43 @@
+.calendario-container {
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+  
+  .calendario-tabla {
+    border-collapse: collapse;
+    width: 100%;
+  }
+  
+  .calendario-tabla th,
+  .calendario-tabla td {
+    border: 1px solid #ddd;
+    padding: 5px;
+    text-align: center;
+    min-width: 40px;
+  }
+  
+  .calendario-tabla th {
+    background-color: #f4f4f4;
+    position: sticky;
+    top: 0;
+  }
+  
+  .cabaña-nombre {
+    min-width: 150px;
+    font-weight: bold;
+    background-color: #f8f9fa;
+  }
+  
+  /* Colores de las reservas */
+  .reserva-ocupada {
+    background-color: #b0f2b6; /* Verde - días intermedios */
+  }
+  
+  .reserva-inicio {
+    background-color: #f4a261; /* Naranja - día de check-in */
+  }
+  
+  .reserva-fin {
+    background-color: #e76f51; /* Rojo - día de check-out */
+  }
+  

@@ -9,7 +9,8 @@ const reservaSchema = new mongoose.Schema({
     cabana: { type: mongoose.Schema.Types.ObjectId, ref: "Cabana", required: true },
     fechaInicio: { type: Date, required: true },
     fechaFin: { type: Date, required: true },
-    estado: { type: String, enum: ["confirmada", "cancelada"], default: "confirmada" }
+    fechaCreacion: { type: Date, default: Date.now },
+    canalOrigen: { type: String, enum: ["PaginaWeb", "Directo", "Boking"], required: true } 
 });
 
 module.exports = mongoose.model("Reserva", reservaSchema);

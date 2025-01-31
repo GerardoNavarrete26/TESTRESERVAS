@@ -2,7 +2,7 @@ const Reserva = require("../models/reservaModels");
 const Cabana = require("../models/cabanaModels");
 
 // Obtener todas las reservas
-exports.obtenerReservas = async (req, res) => {
+const obtenerReservas = async (req, res) => {
     try {
         const reservas = await Reserva.find().populate("cabana");
         res.json(reservas);
@@ -12,7 +12,7 @@ exports.obtenerReservas = async (req, res) => {
 };
 
 // Crear una nueva reserva
-exports.crearReserva = async (req, res) => {
+const crearReserva = async (req, res) => {
     try {
         const { cliente, cabana, fechaInicio, fechaFin } = req.body;
 
@@ -37,7 +37,7 @@ exports.crearReserva = async (req, res) => {
 };
 
 // Actualizar una reserva por ID
-exports.actualizarReserva = async (req, res) => {
+const actualizarReserva = async (req, res) => {
     try {
         const reservaActualizada = await Reserva.findByIdAndUpdate(req.params.id, req.body, { new: true });
         if (!reservaActualizada) {
@@ -50,7 +50,7 @@ exports.actualizarReserva = async (req, res) => {
 };
 
 // Eliminar una reserva por ID
-exports.eliminarReserva = async (req, res) => {
+const eliminarReserva = async (req, res) => {
     try {
         const reservaEliminada = await Reserva.findByIdAndDelete(req.params.id);
         if (!reservaEliminada) {
@@ -68,4 +68,12 @@ exports.eliminarReserva = async (req, res) => {
     } catch (error) {
         res.status(500).json({ mensaje: "Error al eliminar reserva", error });
     }
+};
+
+// Exportar todas las funciones al final
+module.exports = {
+    obtenerReservas,
+    crearReserva,
+    actualizarReserva,
+    eliminarReserva
 };
