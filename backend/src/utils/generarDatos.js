@@ -5,91 +5,105 @@ const Cabana = require("../models/cabanaModels");
 
 dotenv.config();
 
-// Conectar a MongoDB
-mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
+mongoose.connect(process.env.MONGO_URI)
     .then(() => console.log("✅ Conectado a MongoDB"))
     .catch(err => console.error("❌ Error al conectar a MongoDB:", err));
 
-// Datos de clientes falsos
 const clientesFalsos = [
     { nombre: "Carlos Gómez", email: "carlos@example.com", telefono: "123456789" },
     { nombre: "Ana Pérez", email: "ana@example.com", telefono: "987654321" },
     { nombre: "Luis Rodríguez", email: "luis@example.com", telefono: "567890123" },
     { nombre: "María Fernández", email: "maria@example.com", telefono: "345678901" },
-    { nombre: "Pedro Sánchez", email: "pedro@example.com", telefono: "234567890" }
+    { nombre: "Pedro Sánchez", email: "pedro@example.com", telefono: "234567890" },
+    { nombre: "Javier Méndez", email: "javier@example.com", telefono: "567123456" },
+    { nombre: "Laura Torres", email: "laura@example.com", telefono: "654789321" },
+    { nombre: "Andrés Ramírez", email: "andres@example.com", telefono: "789654123" },
+    { nombre: "Carmen López", email: "carmen@example.com", telefono: "321987654" },
+    { nombre: "Fernando Ríos", email: "fernando@example.com", telefono: "987321456" },
+    { nombre: "Sofía Herrera", email: "sofia@example.com", telefono: "852963741" },
+    { nombre: "Ricardo Vázquez", email: "ricardo@example.com", telefono: "741852963" },
+    { nombre: "Gabriela Muñoz", email: "gabriela@example.com", telefono: "369258147" },
+    { nombre: "Esteban Duarte", email: "esteban@example.com", telefono: "147258369" },
+    { nombre: "Natalia Castillo", email: "natalia@example.com", telefono: "951753852" },
+    { nombre: "Rodrigo Alvarado", email: "rodrigo@example.com", telefono: "357951468" },
+    { nombre: "Paola Medina", email: "paola@example.com", telefono: "654123789" },
+    { nombre: "Oscar Paredes", email: "oscar@example.com", telefono: "951357486" },
+    { nombre: "Isabel Ríos", email: "isabel@example.com", telefono: "852147963" },
+    { nombre: "Antonio Gutiérrez", email: "antonio@example.com", telefono: "123789456" },
+    { nombre: "Marina Velázquez", email: "marina@example.com", telefono: "753951852" },
+    { nombre: "Diego Campos", email: "diego@example.com", telefono: "963258741" },
+    { nombre: "Elena Correa", email: "elena@example.com", telefono: "258147369" },
+    { nombre: "Hugo Sosa", email: "hugo@example.com", telefono: "357852951" },
+    { nombre: "Clara Espinoza", email: "clara@example.com", telefono: "852963147" }
 ];
 
-// Función para generar cabañas
-const generarCabanas = async () => {
-    try {
-        // 🔹 Eliminar todas las cabañas existentes para evitar duplicados
-        await Cabana.deleteMany({});
-        
-        const cabanas = [];
+const canales = ["PaginaWeb", "Directo", "Booking"]; // Asegurar valores válidos
 
-        // Agregar 10 cabañas tipo "suite"
-        for (let i = 1; i <= 10; i++) {
-            cabanas.push({ tipo: "suite", numero: i, estado: "disponible" });
-        }
-
-        // Agregar 10 cabañas tipo "tinycabin"
-        for (let i = 1; i <= 10; i++) {
-            cabanas.push({ tipo: "tinycabin", numero: 10 + i, estado: "disponible" });
-        }
-
-        // Insertar todas las cabañas juntas
-        await Cabana.insertMany(cabanas);
-        console.log("✅ Se generaron 20 cabañas correctamente.");
-    } catch (error) {
-        console.error("❌ Error al generar cabañas:", error);
-    }
+const obtenerFechaAleatoria = (inicio, fin) => {
+    return new Date(inicio.getTime() + Math.random() * (fin.getTime() - inicio.getTime()));
 };
 
-// Función para generar reservas
 const generarReservas = async () => {
     try {
-        const cabanasDisponibles = await Cabana.find({ estado: "disponible" });
+        await Reserva.deleteMany({}); // Eliminar reservas previas
 
-        if (cabanasDisponibles.length < 5) {
-            console.log("❌ No hay suficientes cabañas disponibles.");
+        const cabanas = await Cabana.find();
+        if (cabanas.length < 20) {
+            console.log("❌ No hay suficientes cabañas.");
             return;
         }
 
-        const canales = ["PaginaWeb", "Directo", "Boking"]; // 📌 Posibles valores para canalOrigen
-        const reservas = [];
+        let reservas = [];
 
-        for (let i = 0; i < 5; i++) {
-            const cabana = cabanasDisponibles[i];
+        // 🔹 680 Reservas pasadas (2024 - 2025)
+        for (let i = 0; i < 680; i++) {
+            const cabana = cabanas[Math.floor(Math.random() * cabanas.length)];
+            const fechaInicio = obtenerFechaAleatoria(new Date(2024, 0, 1), new Date(2025, 6, 1));
+            const duracion = Math.floor(Math.random() * 6) + 2; // Entre 2 y 7 días
+            const fechaFin = new Date(fechaInicio);
+            fechaFin.setDate(fechaInicio.getDate() + duracion);
 
-            const nuevaReserva = new Reserva({
-                cliente: clientesFalsos[i],
+            reservas.push({
+                cliente: clientesFalsos[Math.floor(Math.random() * clientesFalsos.length)],
                 cabana: cabana._id,
-                fechaInicio: new Date(2024, 1, 10 + i),
-                fechaFin: new Date(2024, 1, 15 + i),
-                fechaCreacion: new Date(), // 📌 Se genera la fecha de creación
-                canalOrigen: canales[Math.floor(Math.random() * canales.length)] // 📌 Asigna un canal aleatorio
+                fechaInicio,
+                fechaFin,
+                fechaCreacion: new Date(),
+                canalOrigen: canales[Math.floor(Math.random() * canales.length)]
             });
+        }
 
-            await nuevaReserva.save();
+        // 🔹 20 Reservas futuras (ACTIVAS)
+        for (let i = 0; i < 20; i++) {
+            const cabana = cabanas[i]; // Las primeras 20 cabañas tendrán reservas activas
+            const fechaInicio = obtenerFechaAleatoria(new Date(), new Date(2025, 11, 31));
+            const duracion = Math.floor(Math.random() * 6) + 2; // Entre 2 y 7 días
+            const fechaFin = new Date(fechaInicio);
+            fechaFin.setDate(fechaInicio.getDate() + duracion);
+
+            reservas.push({
+                cliente: clientesFalsos[Math.floor(Math.random() * clientesFalsos.length)],
+                cabana: cabana._id,
+                fechaInicio,
+                fechaFin,
+                fechaCreacion: new Date(),
+                canalOrigen: canales[Math.floor(Math.random() * canales.length)]
+            });
 
             // Marcar la cabaña como reservada
             cabana.estado = "reservado";
             await cabana.save();
-
-            reservas.push(nuevaReserva);
         }
 
-        console.log("✅ Se generaron 5 reservas falsas con fecha de creación y canal de origen.");
+        await Reserva.insertMany(reservas);
+        console.log("✅ Se generaron 700 reservas correctamente con 25 clientes falsos.");
     } catch (error) {
         console.error("❌ Error al generar reservas:", error);
+    } finally {
+        mongoose.connection.close();
     }
 };
 
-// Ejecutar las funciones en orden
-const ejecutar = async () => {
-    await generarCabanas();
-    await generarReservas();
-    mongoose.connection.close();
-};
+generarReservas();
 
-ejecutar();
+// node src/utils/generarDatos.js  para ejecutar achivo

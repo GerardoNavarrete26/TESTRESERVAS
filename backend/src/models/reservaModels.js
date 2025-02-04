@@ -10,7 +10,7 @@ const reservaSchema = new mongoose.Schema({
     fechaInicio: { type: Date, required: true },
     fechaFin: { type: Date, required: true },
     fechaCreacion: { type: Date, default: Date.now },
-    canalOrigen: { type: String, enum: ["PaginaWeb", "Directo", "Boking"], required: true } 
+    canalOrigen: { type: String, enum: ["PaginaWeb", "Directo", "Booking"], required: true } 
 });
 
 module.exports = mongoose.model("Reserva", reservaSchema);
