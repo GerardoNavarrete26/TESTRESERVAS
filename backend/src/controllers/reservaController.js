@@ -14,24 +14,50 @@ const obtenerReservas = async (req, res) => {
 // Crear una nueva reserva
 const crearReserva = async (req, res) => {
     try {
-        const { cliente, cabana, fechaInicio, fechaFin } = req.body;
+        console.log("🔍 BODY RECIBIDO:", req.body);
 
-        // Verificar si la cabaña está disponible
-        const cabanaDisponible = await Cabana.findById(cabana);
-        if (!cabanaDisponible || cabanaDisponible.estado === "reservado") {
-            return res.status(400).json({ mensaje: "Cabaña no disponible" });
+        const { cliente, cabana, fechaInicio, fechaFin, canalOrigen } = req.body;
+
+        // Verificar que todos los campos requeridos están presentes
+        if (!cliente || !cabana || !fechaInicio || !fechaFin || !canalOrigen) {
+            return res.status(400).json({ mensaje: "Todos los campos (cliente, cabana, fechaInicio, fechaFin, canalOrigen) son requeridos" });
         }
 
-        // Crear la reserva
-        const nuevaReserva = new Reserva({ cliente, cabana, fechaInicio, fechaFin, estado: "pendiente" });
+        // Verificar si la cabaña existe
+        const cabanaDisponible = await Cabana.findById(cabana);
+        if (!cabanaDisponible) {
+            return res.status(400).json({ mensaje: "La cabaña no existe" });
+        }
+
+        // Buscar la última reserva activa de la cabaña
+        const ultimaReserva = await Reserva.findOne({ cabana }).sort({ fechaFin: -1 });
+
+        // Si hay una reserva activa, verificar que la nueva comience después
+        if (ultimaReserva && new Date(fechaInicio) <= new Date(ultimaReserva.fechaFin)) {
+            return res.status(400).json({
+                mensaje: `Cabaña no disponible en estas fechas, la última reserva termina el ${ultimaReserva.fechaFin}`
+            });
+        }
+
+        // Crear la nueva reserva con canalOrigen
+        const nuevaReserva = new Reserva({ 
+            cliente, 
+            cabana, 
+            fechaInicio, 
+            fechaFin, 
+            canalOrigen,  // 🔹 Asegurar que se está incluyendo
+            estado: "pendiente" 
+        });
         await nuevaReserva.save();
 
-        // Marcar la cabaña como reservada
+        // Marcar la cabaña como "reservado"
         cabanaDisponible.estado = "reservado";
         await cabanaDisponible.save();
 
+        console.log("✅ Reserva creada con éxito:", nuevaReserva);
         res.status(201).json(nuevaReserva);
     } catch (error) {
+        console.error("❌ Error al crear reserva:", error);
         res.status(500).json({ mensaje: "Error al crear reserva", error });
     }
 };
@@ -69,6 +95,15 @@ const eliminarReserva = async (req, res) => {
         res.status(500).json({ mensaje: "Error al eliminar reserva", error });
     }
 };
+
+
+
+
+
+
+
+
+
 
 // Exportar todas las funciones al final
 module.exports = {
