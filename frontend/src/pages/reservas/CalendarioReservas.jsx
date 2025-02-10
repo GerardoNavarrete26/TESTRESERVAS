@@ -17,22 +17,27 @@ const CalendarioReservas = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
+        console.log("🔄 Cargando datos...");
         const [cabanasRes, reservasRes] = await Promise.all([
-          fetch(`${API_URL}/cabanas`).then((res) => res.json()),
-          fetch(`${API_URL}/reservas`).then((res) => res.json()),
+          fetch(`${API_URL}/cabins`).then((res) => res.json()),
+          fetch(`${API_URL}/reservations`).then((res) => res.json()),
         ]);
-
+  
+        console.log("✅ Cabañas obtenidas:", cabanasRes);
+        console.log("✅ Reservas obtenidas:", reservasRes);
+  
         setCabanas(cabanasRes);
         setReservas(reservasRes);
         setLoading(false);
       } catch (error) {
-        console.error("Error al obtener datos:", error);
+        console.error("❌ Error al obtener datos:", error);
         setLoading(false);
       }
     };
-
+  
     fetchData();
-  }, []);
+  }, [añoSeleccionado, mesSeleccionado]); // 🔹 Ahora se actualiza cuando cambias mes/año
+  
 
   // Genera los días del mes seleccionado
   const diasDelMes = () => {
@@ -50,18 +55,24 @@ const CalendarioReservas = () => {
     return nombre
       .split(" ")
       .map((palabra) => palabra.charAt(0))
-      .join(""); // Une todas las iniciales
+      .join("");
   };
 
-  // Filtrar reservas y cabañas basadas en el filtro de búsqueda
-  const reservasFiltradas = reservas.filter((reserva) =>
-    reserva.cliente.nombre.toLowerCase().includes(filtro.toLowerCase()) ||
-    reserva.cabana.numero.toString().includes(filtro)
-  );
+  // Filtrar reservas por mes y año seleccionados
+  const reservasFiltradas = reservas.filter((reserva) => {
+    const checkin = reserva.checkinDate.slice(0, 7);
+    const checkout = reserva.checkoutDate.slice(0, 7);
+    const mesAñoSeleccionado = `${añoSeleccionado}-${mesSeleccionado}`;
+    
+    return checkin === mesAñoSeleccionado || checkout === mesAñoSeleccionado || 
+           (checkin < mesAñoSeleccionado && checkout > mesAñoSeleccionado);
+  });
 
-  const cabanasFiltradas = cabanas.filter((cabaña) =>
-    reservasFiltradas.some((reserva) => reserva.cabana._id === cabaña._id)
-  );
+  // Mantener todas las cabañas en la tabla, incluso sin reservas
+  const todasLasCabanas = cabanas.map((cabaña) => ({
+    ...cabaña,
+    reservas: reservasFiltradas.filter((reserva) => reserva.cabin._id === cabaña._id),
+  }));
 
   // Abrir modal con información de la reserva
   const abrirModal = (reserva) => {
@@ -136,15 +147,15 @@ const CalendarioReservas = () => {
             </tr>
           </thead>
           <tbody>
-            {cabanasFiltradas.map((cabaña) => (
+            {todasLasCabanas.map((cabaña) => (
               <tr key={cabaña._id}>
-                <td className="cabaña-nombre">{`${cabaña.tipo} ${cabaña.numero}`}</td>
+                <td className="cabaña-nombre">{` ${cabaña.number}`}</td>
                 {diasDelMes().map((dia) => {
                   const reserva = reservasFiltradas.find(
                     (r) =>
-                      r.cabana._id === cabaña._id &&
-                      r.fechaInicio.slice(0, 10) <= dia.fecha &&
-                      r.fechaFin.slice(0, 10) >= dia.fecha
+                      r.cabin._id === cabaña._id &&
+                      r.checkinDate.slice(0, 10) <= dia.fecha &&
+                      r.checkoutDate.slice(0, 10) >= dia.fecha
                   );
 
                   return (
@@ -152,17 +163,17 @@ const CalendarioReservas = () => {
                       key={dia.fecha}
                       className={
                         reserva
-                          ? reserva.fechaInicio.slice(0, 10) === dia.fecha
+                          ? reserva.checkinDate.slice(0, 10) === dia.fecha
                             ? "reserva-inicio"
-                            : reserva.fechaFin.slice(0, 10) === dia.fecha
+                            : reserva.checkoutDate.slice(0, 10) === dia.fecha
                             ? "reserva-fin"
                             : "reserva-ocupada"
                           : ""
                       }
-                      title={reserva ? `Cliente: ${reserva.cliente.nombre} | Check-in: ${reserva.fechaInicio.slice(0, 10)} | Check-out: ${reserva.fechaFin.slice(0, 10)}` : ""}
+                      title={reserva ? `Cliente: ${reserva.client.name}` : ""}
                       onClick={() => reserva && abrirModal(reserva)}
                     >
-                      {reserva ? `${obtenerIniciales(reserva.cliente.nombre)} - ${reserva._id.slice(-4)}` : ""}
+                      {reserva ? `${obtenerIniciales(reserva.client.name)} - ${reserva._id.slice(-4)}` : ""}
                     </td>
                   );
                 })}
@@ -172,22 +183,49 @@ const CalendarioReservas = () => {
         </table>
       </div>
 
-      {/* Modal de Información de Reserva */}
-      {reservaSeleccionada && (
-        <div className="modal">
-          <div className="modal-content">
-            <h3>Detalles de la Reserva</h3>
-            <p><strong>Cliente:</strong> {reservaSeleccionada.cliente.nombre}</p>
-            <p><strong>Email:</strong> {reservaSeleccionada.cliente.email}</p>
-            <p><strong>Teléfono:</strong> {reservaSeleccionada.cliente.telefono}</p>
-            <p><strong>Cabaña:</strong> {`${reservaSeleccionada.cabana.tipo} ${reservaSeleccionada.cabana.numero}`}</p>
-            <p><strong>Fecha de Ingreso:</strong> {reservaSeleccionada.fechaInicio.slice(0, 10)}</p>
-            <p><strong>Fecha de Salida:</strong> {reservaSeleccionada.fechaFin.slice(0, 10)}</p>
-            <p><strong>Canal de Origen:</strong> {reservaSeleccionada.canalOrigen}</p>
-            <button onClick={cerrarModal}>Cerrar</button>
-          </div>
-        </div>
-      )}
+{/* Modal de Información de Reserva */}
+{reservaSeleccionada && (
+  <div className="modal">
+    <div className="modal-content">
+      <h3>Detalles de la Reserva</h3>
+
+      {/* Datos del Cliente */}
+      <p><strong>Nombre del Cliente:</strong> {reservaSeleccionada.client.name}</p>
+      <p><strong>Tipo de Documento:</strong> {reservaSeleccionada.clientDocumentType}</p>
+      <p><strong>Número de Documento:</strong> {reservaSeleccionada.clientDocumentNumber}</p>
+      <p><strong>Teléfono:</strong> {reservaSeleccionada.client.phone || "No registrado"}</p>
+      <p><strong>Email:</strong> {reservaSeleccionada.client.email || "No registrado"}</p>
+
+      {/* Detalles de la Cabaña */}
+      <h4>Información de la Cabaña</h4>
+      <p><strong>Nombre:</strong> {`${reservaSeleccionada.cabin.type} ${reservaSeleccionada.cabin.number}`}</p>
+      <p><strong>Capacidad:</strong> {`Adultos: ${reservaSeleccionada.cabin.maxAdults}, Niños: ${reservaSeleccionada.cabin.maxChildren}`}</p>
+      <p><strong>¿Tiene Jacuzzi?</strong> {reservaSeleccionada.cabin.hasHotTub ? "Sí" : "No"}</p>
+      <p><strong>Estado:</strong> {reservaSeleccionada.cabin.status}</p>
+      <p><strong>Precio por noche:</strong> {`${reservaSeleccionada.cabin.price} ${reservaSeleccionada.cabin.currency}`}</p>
+
+      {/* Fechas y Duración de la Reserva */}
+      <h4>Detalles de la Reserva</h4>
+      <p><strong>Fecha de Check-in:</strong> {new Date(reservaSeleccionada.checkinDate).toLocaleDateString()}</p>
+      <p><strong>Fecha de Check-out:</strong> {new Date(reservaSeleccionada.checkoutDate).toLocaleDateString()}</p>
+      <p><strong>Noches Reservadas:</strong> {Math.ceil((new Date(reservaSeleccionada.checkoutDate) - new Date(reservaSeleccionada.checkinDate)) / (1000 * 60 * 60 * 24))} noches</p>
+
+      {/* Información de Pago */}
+      <h4>Información de Pago</h4>
+      <p><strong>Método de Pago:</strong> {reservaSeleccionada.paymentMethod}</p>
+      <p><strong>Origen del Pago:</strong> {reservaSeleccionada.paymentOrigin}</p>
+
+      {/* Estado y Creación de la Reserva */}
+      <h4>Estado y Registro</h4>
+      <p><strong>Estado de la Reserva:</strong> {reservaSeleccionada.isHistorical ? "Histórica" : "Activa"}</p>
+      <p><strong>Fecha de Creación:</strong> {new Date(reservaSeleccionada.createdAt).toLocaleString()}</p>
+      <p><strong>Última Actualización:</strong> {new Date(reservaSeleccionada.updatedAt).toLocaleString()}</p>
+
+      {/* Botón para cerrar */}
+      <button onClick={cerrarModal}>Cerrar</button>
+    </div>
+  </div>
+)}
     </div>
   );
 };

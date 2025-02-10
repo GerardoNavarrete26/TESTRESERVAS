@@ -1,9 +1,9 @@
-const Cabana = require("../models/cabanaModels");
+const Cabin = require("../models/cabinModels");
 
 // Obtener todas las cabañas
 const obtenerCabanas = async (req, res) => {
     try {
-        const cabanas = await Cabana.find();
+        const cabanas = await Cabin.find();
         res.json(cabanas);
     } catch (error) {
         res.status(500).json({ mensaje: "Error al obtener cabañas", error });
@@ -13,19 +13,29 @@ const obtenerCabanas = async (req, res) => {
 // Crear una nueva cabaña
 const crearCabana = async (req, res) => {
     try {
-        const { tipo, numero } = req.body;
+        console.log("🔍 BODY RECIBIDO:", req.body);
 
-        // Verificar si el número de cabaña ya existe
-        const cabanaExistente = await Cabana.findOne({ numero });
-        if (cabanaExistente) {
-            return res.status(400).json({ mensaje: "El número de cabaña ya existe" });
+        const { type, number, maxAdults, maxChildren, price, currency } = req.body;
+
+        // Verificar que todos los campos requeridos están presentes
+        if (!type || !number || !maxAdults || !maxChildren || !price) {
+            return res.status(400).json({ mensaje: "Todos los campos (type, number, maxAdults, maxChildren, price) son requeridos" });
         }
 
-        const nuevaCabana = new Cabana({ tipo, numero });
+        // Verificar si la cabaña ya existe
+        const cabanaExistente = await Cabin.findOne({ number });
+        if (cabanaExistente) {
+            return res.status(400).json({ mensaje: "La cabaña con este número ya existe" });
+        }
+
+        // Crear la nueva cabaña
+        const nuevaCabana = new Cabin({ type, number, maxAdults, maxChildren, price, currency });
         await nuevaCabana.save();
 
+        console.log("✅ Cabaña creada con éxito:", nuevaCabana);
         res.status(201).json(nuevaCabana);
     } catch (error) {
+        console.error("❌ Error al crear cabaña:", error);
         res.status(500).json({ mensaje: "Error al crear cabaña", error });
     }
 };
@@ -33,7 +43,7 @@ const crearCabana = async (req, res) => {
 // Actualizar una cabaña por ID
 const actualizarCabana = async (req, res) => {
     try {
-        const cabanaActualizada = await Cabana.findByIdAndUpdate(req.params.id, req.body, { new: true });
+        const cabanaActualizada = await Cabin.findByIdAndUpdate(req.params.id, req.body, { new: true });
         if (!cabanaActualizada) {
             return res.status(404).json({ mensaje: "Cabaña no encontrada" });
         }
@@ -46,7 +56,7 @@ const actualizarCabana = async (req, res) => {
 // Eliminar una cabaña por ID
 const eliminarCabana = async (req, res) => {
     try {
-        const cabanaEliminada = await Cabana.findByIdAndDelete(req.params.id);
+        const cabanaEliminada = await Cabin.findByIdAndDelete(req.params.id);
         if (!cabanaEliminada) {
             return res.status(404).json({ mensaje: "Cabaña no encontrada" });
         }
