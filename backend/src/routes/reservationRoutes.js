@@ -5,7 +5,7 @@ const router = express.Router();
 
 router.get("/", obtenerReservas);  // Obtener todas las reservas
 router.post("/", crearReserva);    // Crear una nueva reserva
-router.put("/:id", actualizarReserva); // Actualizar una reserva por ID
+router.put("/d:i", actualizarReserva); // Actualizar una reserva por ID
 router.delete("/:id", eliminarReserva); // Eliminar una reserva por ID
 
 module.exports = router;

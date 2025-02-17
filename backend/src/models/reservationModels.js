@@ -6,7 +6,7 @@ const reservationSchema = new mongoose.Schema({
         ref: "Cabin",
         required: true
     },
-    client: {  // ✅ Cambiado a client en lugar de clientDocumentNumber
+    client: {  
         type: mongoose.Schema.Types.ObjectId,
         ref: "Client",
         required: true

@@ -180,6 +180,12 @@ const CalendarioReservas = () => {
               </tr>
             ))}
           </tbody>
+          <tr>
+              <th>Alojamiento</th>
+              {diasDelMes().map((dia) => (
+                <th key={dia.fecha}>{dia.dia}</th>
+              ))}
+            </tr>
         </table>
       </div>
 
