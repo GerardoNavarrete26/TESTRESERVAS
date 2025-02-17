@@ -288,7 +288,7 @@ function AñadirReservas() {
           <option value="">Seleccione una cabaña</option>
           {habitaciones.map((cabaña) => (
             <option key={cabaña._id} value={cabaña._id}>
-              {cabaña.type} - {cabaña.number}
+             {cabaña.number}
             </option>
           ))}
         </select>
