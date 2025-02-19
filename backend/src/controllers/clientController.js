@@ -12,20 +12,25 @@ const obtenerClientes = async (req, res) => {
 
 // Buscar cliente por número de documento
 const obtenerClientePorDocumento = async (req, res) => {
-    try {
-      const { documentNumber } = req.query; // Tomamos el número de documento desde la query
-      const cliente = await Client.findOne({ documentNumber }); // Buscar por documentNumber
-  
-      if (cliente) {
-        return res.json(cliente); // Si el cliente existe, retornamos los datos del cliente
-      } else {
-        return res.json({}); // Si no se encuentra, retornamos un objeto vacío
-      }
-    } catch (error) {
-      console.error("Error al buscar cliente:", error);
-      return res.status(500).json({ message: "Error al buscar cliente", error });
+  try {
+    const { documentNumber } = req.query; // Obtener el número de documento desde la consulta
+    if (!documentNumber) {
+      return res.status(400).json({ message: "El número de documento es obligatorio" });
     }
-  };
+
+    // Usamos findOne() para obtener un único cliente
+    const cliente = await Client.findOne({ documentNumber }); // Buscar por documentNumber
+    if (cliente) {
+      return res.json(cliente);  // Si el cliente existe, retornamos los datos del cliente
+    } else {
+      return res.json(null);  // Si no existe, retornamos null
+    }
+  } catch (error) {
+    console.error("Error al buscar cliente:", error);
+    return res.status(500).json({ message: "Error al buscar cliente", error });
+  }
+};
+
   
 
 // Crear un nuevo cliente
@@ -86,7 +91,6 @@ const eliminarCliente = async (req, res) => {
 
 // Exportar todas las funciones al final
 module.exports = {
-    obtenerClientes,
     crearCliente,
     actualizarCliente,
     eliminarCliente,

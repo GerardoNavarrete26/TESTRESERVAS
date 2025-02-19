@@ -108,17 +108,22 @@ function AñadirReservas() {
       email: emailCliente,
       nationality: nacionalidadCliente,
     };
-
+  
     try {
+      // Primero, buscamos si el cliente ya existe por su número de documento
       const existingClient = await fetch(
         `http://localhost:3000/api/clients?documentNumber=${clientData.documentNumber}`
       );
       const existingClientData = await existingClient.json();
-
-      if (existingClientData._id) {
+  
+      console.log('Datos obtenidos del backend:', existingClientData);
+  
+      if (existingClientData && existingClientData._id) {
+        // Si el cliente ya existe, retornamos la ID del cliente existente
         console.log("Cliente ya existe:", existingClientData);
-        return existingClientData._id; 
+        return existingClientData._id;  // Usamos la ID del cliente existente
       } else {
+        // Si el cliente no existe, lo creamos
         const response = await fetch("http://localhost:3000/api/clients", {
           method: "POST",
           headers: {
@@ -126,21 +131,23 @@ function AñadirReservas() {
           },
           body: JSON.stringify(clientData),
         });
-
+  
         const result = await response.json();
         if (response.ok) {
           console.log("Nuevo cliente creado:", result);
-          return result._id; 
+          return result._id;  // Usamos la ID del nuevo cliente creado
         } else {
           alert(result.message || "Error al crear el cliente");
+          return null;
         }
       }
     } catch (error) {
       console.error("Error al crear o buscar cliente:", error);
       alert("Error en la conexión con el servidor");
+      return null;
     }
   };
-
+  
   const createReservation = async (clientId) => {
     const reservaData = {
       client: clientId,
@@ -179,13 +186,18 @@ function AñadirReservas() {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-
+  
+    // Primero, crear o buscar el cliente
     const clientId = await createClient();
-
+  
     if (clientId) {
+      // Si se obtiene una ID válida, crear la reserva
       createReservation(clientId);
+    } else {
+      alert("No se pudo crear ni encontrar al cliente.");
     }
   };
+  
 
 
   return (
